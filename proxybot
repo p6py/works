@@ -1,0 +1,63 @@
+import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from bs4 import BeautifulSoup as BS
+import random
+import requests
+def proxy():
+    link = "https://proxycompass.com/ru/free-proxy/"
+    r = requests.get(link).text
+    soup = BS(r, 'lxml')
+    block = soup.find("table", class_="m-0")
+    rows = block.find_all('tr')
+
+
+    correct_row = rows[random.randint(1, len(rows) - 1)]
+
+    columns = correct_row.find_all('td')
+    aipi = columns[0].text.strip()
+    port = columns[1].text.strip()
+    country = columns[4].text.strip()
+    type_proxy = columns[2].text.strip()
+    result = f"{aipi}:{port}"
+    return result, country, type_proxy
+
+
+proxy_info, country_info, type_proxy = proxy()
+print(f"Прокси: {proxy_info}, Страна: {country_info.split()[:-1]}")
+
+
+
+TOKEN = "7732463535:AAFWQ21N2s0Kynt0tmtukax2DkwBCSXlSp0"
+
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
+
+def get_keyboard():
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="Получить рандом прокси")]
+        ],
+        resize_keyboard=True
+    )
+    return keyboard
+
+@dp.message(Command("start"))
+async def cmd_start(message: types.Message):
+    await message.answer(
+        "Нажми кнопку для получения прокси",
+        reply_markup=get_keyboard()
+    )
+
+@dp.message(lambda message: message.text == "Получить рандом прокси")
+async def get_proxy_handler(message: types.Message):
+    proxy_info, country_info, type_proxy = proxy()
+    country_info = ' '.join(country_info.split()[:-1])
+    await message.answer(f"Ваш прокси: {proxy_info} \nСтрана: {country_info}\nТип: {type_proxy}")
+
+async def main():
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
