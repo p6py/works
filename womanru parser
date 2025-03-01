@@ -1,0 +1,21 @@
+import requests
+from bs4 import BeautifulSoup as BS
+headers = {
+    "Your headers here"
+}
+
+link = input()
+achievements_link = link + "achievements"
+r_achieve = requests.get(achievements_link, headers=headers)
+r = requests.get(link, headers=headers)
+soup = BS(r.text, 'lxml')
+soup_achiev = BS(r_achieve.text , "lxml")
+
+username = soup.find("a", "user-info__name").text
+reg_data = soup.find("time", "user-info__field-value").text
+counter = soup.find_all("div", "user-statistic__count")
+achievements = soup_achiev.find("a", "achievement__status")
+
+
+
+print(f"Юзернейм: {username}\nЗвание: {achievements.text.strip()}\nДата регистрации:{reg_data}\nТем создано: {counter[0].text}\nОтветов: {counter[1].text}")
