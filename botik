@@ -1,0 +1,55 @@
+import requests
+import asyncio
+from telegram import Bot
+from telegram.error import TelegramError
+
+# Конфигурация
+TELEGRAM_BOT_TOKEN = "7799501162:AAHSMbfTtDNhxRhKT6N78OkPNHm7zAg9YDc"  # Ваш токен бота
+TELEGRAM_CHANNEL_ID = "@rrmoneyprice"  # Ваш канал
+DEXSCREENER_PAIR_ID = "eqbb6ueuuvmgse-pwgjam4rcv_ghp0qaa4jj1-_bobo_exaj"  # Идентификатор пары
+UPDATE_INTERVAL = 60  # Интервал обновления в секундах (1 минута)
+
+# Инициализация бота
+bot = Bot(token=TELEGRAM_BOT_TOKEN)
+
+
+def get_token_price():
+    """Получает цену токена через API DexScreener."""
+    url = f"https://api.dexscreener.com/latest/dex/pairs/ton/{DEXSCREENER_PAIR_ID}"
+    try:
+        response = requests.get(url, timeout=1)
+        if response.status_code == 200:
+            data = response.json()
+            price = data['pair']['priceUsd']
+            return f"Price: ${price}"
+        else:
+            return f"Ошибка при запросе данных: {response.status_code}"
+    except requests.exceptions.RequestException as e:
+        return f"Произошла ошибка при выполнении запроса: {e}"
+
+
+async def send_message_to_channel(message):
+    """Отправляет сообщение в Telegram-канал."""
+    try:
+        await bot.send_message(chat_id=TELEGRAM_CHANNEL_ID, text=message)
+        print(f"Сообщение отправлено: {message}")
+    except TelegramError as e:
+        print(f"Ошибка при отправке сообщения: {e}")
+
+
+async def main():
+    """Основной цикл бота."""
+    while True:
+        # Получаем цену токена
+        message = get_token_price()
+
+        # Отправляем сообщение в канал
+        await send_message_to_channel(message)
+
+        # Ждем указанный интервал
+        await asyncio.sleep(UPDATE_INTERVAL)
+
+
+if __name__ == "__main__":
+    # Запуск асинхронного цикла
+    asyncio.run(main())
